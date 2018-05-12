@@ -17,8 +17,16 @@ suite "Testing Equality within Katoms":
         check klc("hello world") == klc("hello world")
 
 
-# echo klc("hello world")
-# echo kzip(klc("abc").v3, klc("nfd").v3)
-# echo @[true, false].count(true) == 2
-# echo d_plus(kn(10), kn(-45.7))
-# echo d_plus(kn(10), kl(@[kn(1), kn(2)]))
+suite "Testing dyadic plus":
+    test "knumber + knumber":
+        check d_plus(kn(2), kn(3)) == kn(5)
+        check d_plus(kn(4.5), kn(5)) == kn(9.5)
+
+    test "knumber + klist[knumber]":
+        check d_plus(kn(1.5), kln(@[1,2,3,4,5])) == kln(@[2.5, 3.5, 4.5, 5.5, 6.5])
+
+    test "klist[knumber] + knumber":
+        check d_plus(kln(@[1,2,3,4,5]), kn(1.5)) == kln(@[2.5, 3.5, 4.5, 5.5, 6.5])
+
+    test "klist[knumber] + klist[knumber]":
+        check d_plus(kln(@[1,2,3,4,5]), kln(@[1,2,3,4,5])) == kln(@[2, 4, 6, 8, 10])

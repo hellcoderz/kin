@@ -17,14 +17,15 @@ type
       # kcond=12,
       # kquote=13
 
-    Ktuple* = ref tuple[x: Katom, y: Katom]
-
     Katom* = ref object
       case t: Ktype
       of knumber: v0*: float
       of kchar: v1*: int
       of ksymbol: v2*: string
-      of klist: v3*: seq[Katom]
+      of klist:
+        rank*: int
+        ltype*: Ktype
+        v3*: seq[Katom]
       of kdictionary: v4*: TableRef[Katom, Katom]
       of kfunction:
         left*, right*: Katom
@@ -36,7 +37,9 @@ proc ks*(v: string): Katom = Katom(t: ksymbol, v2: v)
 proc kl*(v: seq[Katom]): Katom = Katom(t: klist, v3: v)
 proc kc*(v: int): Katom = Katom(t: kchar, v1: v)
 proc kc*(v: char): Katom = Katom(t: kchar, v1: int(v))
-proc klc*(v: string): Katom = Katom(t: klist, v3: toSeq(v.items).map(proc(c: char): Katom = kc(c)))
+proc klc*(v: string): Katom = Katom(t: klist, ltype: kchar, rank: 1, v3: toSeq(v.items).map(proc(c: char): Katom = kc(c)))
+proc kln*(v: seq[float]): Katom = Katom(t: klist, ltype: knumber, rank: 1, v3: v.map(proc(n: float): Katom = kn(n)))
+proc kln*(v: seq[int]): Katom = Katom(t: klist, ltype: knumber, rank: 1, v3: v.map(proc(n: int): Katom = kn(n)))
 
 proc `$`*(x: Katom): string = 
         case x.t
@@ -64,6 +67,7 @@ proc kzip*(x: seq[Katom], y: seq[Katom]): seq[tuple[a: Katom, b: Katom]] =
     echo "length error."
     result = @[]
 
+# equality check for testing
 proc `==`*(x: Katom, y: Katom): bool = 
     if x.t != y.t:
       return false
@@ -80,6 +84,7 @@ proc `==`*(x: Katom, y: Katom): bool =
       of kdictionary: return false # TODO
       of kfunction: return false # TODO
 
+# dyadic plus
 proc d_plus*(left: Katom, right: Katom): Katom =
   if left.t == knumber and right.t == knumber:
     result = kn(left.v0 + right.v0)
@@ -90,3 +95,5 @@ proc d_plus*(left: Katom, right: Katom): Katom =
   elif left.t == klist and right.t == klist:
     if klen(left).v0 == klen(right).v0:
       result = kl(zip(left.v3, right.v3).map(proc(xy: tuple[a: Katom, b: Katom]): Katom = d_plus(xy.a, xy.b)))
+  else:
+    echo "domain error."
