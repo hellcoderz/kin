@@ -1,7 +1,7 @@
 import tables, sequtils, strformat
 
 type
-    Ktype* = enum
+    Ktype* = enum # K built-in and only supported datatypes
       knumber=0,
       kchar=1,
       ksymbol=2,
@@ -17,7 +17,7 @@ type
       # kcond=12,
       # kquote=13
 
-    Katom* = ref object
+    Katom* = ref object # main K object for AST
       case t: Ktype
       of knumber: v0*: float
       of kchar: v1*: int
@@ -39,10 +39,12 @@ proc kc*(v: int): Katom = Katom(t: kchar, v1: v) # create a kchar Katom with asc
 proc kc*(v: char): Katom = Katom(t: kchar, v1: int(v)) # create a kchar Katom with char as input
 # create a klist Katom with seq of kchar Katom (represents string data type)
 proc klc*(v: string): Katom = Katom(t: klist, ltype: kchar, rank: 1, v3: toSeq(v.items).map(proc(c: char): Katom = kc(c)))
-# create a klist Katom with seq of knumber katom
+# create a klist Katom with seq of knumber[float] katom
 proc kln*(v: seq[float]): Katom = Katom(t: klist, ltype: knumber, rank: 1, v3: v.map(proc(n: float): Katom = kn(n)))
+# create a klist Katom with seq of knumber[int] katom
 proc kln*(v: seq[int]): Katom = Katom(t: klist, ltype: knumber, rank: 1, v3: v.map(proc(n: int): Katom = kn(n)))
 
+# similar to toString() method in Java for pretty print to console
 proc `$`*(x: Katom): string = 
         case x.t
         of knumber: return fmt"[t: {x.t}, v: {x.v0}]"
@@ -52,7 +54,7 @@ proc `$`*(x: Katom): string =
         of kdictionary: return fmt"[t: ${x.t}, v: {x.v4}]"
         of kfunction: return fmt"[t: {x.t}, v: {x.v5}]"
 
-
+# method to return length of all type Katom as knumber Katom (very powerfull APL style)
 proc klen*(x: Katom): Katom = 
         case x.t
         of knumber: return kn(1)
@@ -62,6 +64,7 @@ proc klen*(x: Katom): Katom =
         of kdictionary: return kn(x.v4.len)
         of kfunction: return kn(1)
 
+# method to zip 2 array into tuples
 proc kzip*(x: seq[Katom], y: seq[Katom]): seq[tuple[a: Katom, b: Katom]] =
   if x.len == y.len:
     result = zip(x, y)
@@ -100,6 +103,6 @@ proc d_plus*(left: Katom, right: Katom): Katom =
   else:
     echo "domain error."
 
-
+# start the main module
 if isMainModule:
   echo "K Language implementation in Nim [v0.0.1]"
