@@ -31,13 +31,15 @@ type
         left*, right*: Katom
         v5*: string
 
-proc kn*(v: float): Katom = Katom(t: knumber, v0: v)
-proc kn*(v: int): Katom = Katom(t: knumber, v0: v.toFloat)
-proc ks*(v: string): Katom = Katom(t: ksymbol, v2: v)
-proc kl*(v: seq[Katom]): Katom = Katom(t: klist, v3: v)
-proc kc*(v: int): Katom = Katom(t: kchar, v1: v)
-proc kc*(v: char): Katom = Katom(t: kchar, v1: int(v))
+proc kn*(v: float): Katom = Katom(t: knumber, v0: v) # create a knumber Katom with float as input
+proc kn*(v: int): Katom = Katom(t: knumber, v0: v.toFloat) # create a knumber Katom with int as input
+proc ks*(v: string): Katom = Katom(t: ksymbol, v2: v) # create a ksymbol Katom
+proc kl*(v: seq[Katom]): Katom = Katom(t: klist, v3: v) # create a klist Katom with seq of any type of Katom
+proc kc*(v: int): Katom = Katom(t: kchar, v1: v) # create a kchar Katom with ascii value as input
+proc kc*(v: char): Katom = Katom(t: kchar, v1: int(v)) # create a kchar Katom with char as input
+# create a klist Katom with seq of kchar Katom (represents string data type)
 proc klc*(v: string): Katom = Katom(t: klist, ltype: kchar, rank: 1, v3: toSeq(v.items).map(proc(c: char): Katom = kc(c)))
+# create a klist Katom with seq of knumber katom
 proc kln*(v: seq[float]): Katom = Katom(t: klist, ltype: knumber, rank: 1, v3: v.map(proc(n: float): Katom = kn(n)))
 proc kln*(v: seq[int]): Katom = Katom(t: klist, ltype: knumber, rank: 1, v3: v.map(proc(n: int): Katom = kn(n)))
 
@@ -97,3 +99,7 @@ proc d_plus*(left: Katom, right: Katom): Katom =
       result = kl(zip(left.v3, right.v3).map(proc(xy: tuple[a: Katom, b: Katom]): Katom = d_plus(xy.a, xy.b)))
   else:
     echo "domain error."
+
+
+if isMainModule:
+  echo "K Language implementation in Nim [v0.0.1]"
