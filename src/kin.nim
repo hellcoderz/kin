@@ -8,6 +8,7 @@ type
       klist=3
       kdictionary=4,
       kfunction=5,
+      knil=6,
       # kview=6,
       # knameref=7,
       # kverb=8,
@@ -23,14 +24,16 @@ type
       of kchar: v1*: int
       of ksymbol: v2*: string
       of klist:
-        rank*: int
+        rank*: Katom
         ltype*: Ktype
         v3*: seq[Katom]
       of kdictionary: v4*: TableRef[Katom, Katom]
       of kfunction:
         left*, right*: Katom
         v5*: string
+      of knil: v11: string
 
+proc kn*(): Katom = Katom(t: knil, v11: "NIL") # create a knil Katom
 proc kn*(v: float): Katom = Katom(t: knumber, v0: v) # create a knumber Katom with float as input
 proc kn*(v: int): Katom = Katom(t: knumber, v0: v.toFloat) # create a knumber Katom with int as input
 proc ks*(v: string): Katom = Katom(t: ksymbol, v2: v) # create a ksymbol Katom
@@ -38,11 +41,18 @@ proc kl*(v: seq[Katom]): Katom = Katom(t: klist, v3: v) # create a klist Katom w
 proc kc*(v: int): Katom = Katom(t: kchar, v1: v) # create a kchar Katom with ascii value as input
 proc kc*(v: char): Katom = Katom(t: kchar, v1: int(v)) # create a kchar Katom with char as input
 # create a klist Katom with seq of kchar Katom (represents string data type)
-proc klc*(v: string): Katom = Katom(t: klist, ltype: kchar, rank: 1, v3: toSeq(v.items).map(proc(c: char): Katom = kc(c)))
+proc klc*(v: string): Katom = Katom(t: klist, ltype: kchar, rank: kn(1), v3: toSeq(v.items).map(proc(c: char): Katom = kc(c)))
 # create a klist Katom with seq of knumber[float] katom
-proc kln*(v: seq[float]): Katom = Katom(t: klist, ltype: knumber, rank: 1, v3: v.map(proc(n: float): Katom = kn(n)))
+proc kln*(v: seq[float]): Katom = Katom(t: klist, ltype: knumber, rank: kn(1), v3: v.map(proc(n: float): Katom = kn(n)))
 # create a klist Katom with seq of knumber[int] katom
-proc kln*(v: seq[int]): Katom = Katom(t: klist, ltype: knumber, rank: 1, v3: v.map(proc(n: int): Katom = kn(n)))
+proc kln*(v: seq[int]): Katom = Katom(t: klist, ltype: knumber, rank: kn(1), v3: v.map(proc(n: int): Katom = kn(n)))
+# create a function nde with 2 children
+proc kf*(v: string, left: Katom, right: Katom): Katom = Katom(t: kfunction, left: left, right: right, v5: v)
+# create a function nde with right children only
+proc kf*(v: string, right: Katom): Katom = Katom(t: kfunction, left: kn(), right: right, v5: v)
+# create a function nde with left children only
+proc kf*(v: string, left: Katom): Katom = Katom(t: kfunction, left: left, right: kn(), v5: v)
+
 
 # similar to toString() method in Java for pretty print to console
 proc `$`*(x: Katom): string = 
@@ -52,7 +62,8 @@ proc `$`*(x: Katom): string =
         of ksymbol: return fmt"[t: {x.t}, v: {x.v2}]"
         of klist: return fmt"[t: {x.t}, v: {x.v3}]"
         of kdictionary: return fmt"[t: ${x.t}, v: {x.v4}]"
-        of kfunction: return fmt"[t: {x.t}, v: {x.v5}]"
+        of kfunction: return fmt"[t: {x.t}, v: {x.v5}, left: {x.left}, right: {x.right}]"
+        of knil: return fmt"[t: {x.t}, v: {x.v11}]"
 
 # method to return length of all type Katom as knumber Katom (very powerfull APL style)
 proc klen*(x: Katom): Katom = 
@@ -63,6 +74,7 @@ proc klen*(x: Katom): Katom =
         of klist: return kn(x.v3.len)
         of kdictionary: return kn(x.v4.len)
         of kfunction: return kn(1)
+        of knil: return kn(1)
 
 # method to zip 2 array into tuples
 proc kzip*(x: seq[Katom], y: seq[Katom]): seq[tuple[a: Katom, b: Katom]] =
@@ -88,6 +100,7 @@ proc `==`*(x: Katom, y: Katom): bool =
           return kzip(x.v3, y.v3).map(proc(xy: tuple[a: Katom, b: Katom]): bool = xy.a == xy.b).count(true) == klen(x).v0.toInt
       of kdictionary: return false # TODO
       of kfunction: return false # TODO
+      of knil: return x.v11 == y.v11
 
 # dyadic plus
 proc d_plus*(left: Katom, right: Katom): Katom =
@@ -102,6 +115,22 @@ proc d_plus*(left: Katom, right: Katom): Katom =
       result = kl(zip(left.v3, right.v3).map(proc(xy: tuple[a: Katom, b: Katom]): Katom = d_plus(xy.a, xy.b)))
   else:
     echo "domain error."
+
+# method to apply functions to left, right nodes of ast
+proc applyfunction(f: Katom, left: Katom, right: Katom): Katom =
+  if f.v5 == "+":
+    return d_plus(left, right)
+  else:
+    return kn()
+
+# maineval method on top of ast
+proc eval*(node: Katom): Katom =
+  if node.t == kfunction:
+    echo "function node"
+    if not node.left.isNil and not node.right.isNil:
+      return applyfunction(node, eval(node.left), eval(node.right))
+  return node
+
 
 # start the main module
 if isMainModule:

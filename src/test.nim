@@ -30,3 +30,8 @@ suite "Testing dyadic plus":
 
     test "klist[knumber] + klist[knumber]":
         check d_plus(kln(@[1,2,3,4,5]), kln(@[1,2,3,4,5])) == kln(@[2, 4, 6, 8, 10])
+
+suite "Testing eval function":
+    test "with d_plus and left + right nodes":
+        var ast = kf("+", kn(5), kn(6))
+        check eval(ast) == kn(11)
