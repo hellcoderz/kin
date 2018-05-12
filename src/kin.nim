@@ -33,6 +33,9 @@ type
         v5*: string
       of knil: v11: string
 
+########################################
+##### KATOM CREATATION FUNCTIONS #######
+########################################
 proc kn*(v: string): Katom = Katom(t: knil, v11: v) # create a knil Katom with string message
 proc kn*(): Katom = Katom(t: knil, v11: "NIL") # create a knil Katom
 proc kn*(v: float): Katom = Katom(t: knumber, v0: v) # create a knumber Katom with float as input
@@ -54,6 +57,9 @@ proc kfr*(v: string, right: Katom): Katom = Katom(t: kfunction, left: kn(), righ
 # create a function nde with left children only
 proc kfl*(v: string, left: Katom): Katom = Katom(t: kfunction, left: left, right: kn(), v5: v)
 
+###################################
+##### UTILITIES FUNCTION ##########
+###################################
 # check if Katom is of type knil
 proc isNil*(x: Katom): bool = x.t == knil
 
@@ -109,6 +115,9 @@ proc `==`*(x: Katom, y: Katom): bool =
           return false
       of knil: return x.v11 == y.v11
 
+##################################
+##### K functions ################
+##################################
 # dyadic plus
 proc d_plus*(left: Katom, right: Katom): Katom =
   if left.isNil and right.isNil:
