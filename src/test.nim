@@ -1,4 +1,4 @@
-import ./ok, unittest, macros, sequtils, strutils
+import ./kin, unittest, macros, sequtils, strutils
 
 suite "Testing Equality within Katoms":
     test "testing for knumber":
