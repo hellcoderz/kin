@@ -1,4 +1,4 @@
-import tables, sequtils, strutils
+import tables, sequtils, strformat
 
 type
     Ktype* = enum
@@ -37,12 +37,12 @@ proc kl*(v: seq[Katom]): Katom = Katom(t: klist, v3: v)
 
 proc `$`*(x: Katom): string = 
         case x.t
-        of knumber: return fmt"{t: ${x.t}, v: ${x.v0}}"
-        of kchar: return fmt"{t: ${x.t}, v: ${x.v1}}"
-        of ksymbol: return fmt"{t: ${x.t}, v: ${x.v2}}"
-        of klist: return fmt"{t: ${x.t}, v: ${x.v3}}"
-        of kdictionary: return fmt"{t: ${x.t}, v: ${x.v4}}"
-        of kfunction: return fmt"{t: ${x.t}, v: ${x.v5}}"
+        of knumber: return fmt"[t: {x.t}, v: {x.v0}]"
+        of kchar: return fmt"[t: {x.t}, v: {x.v1}]"
+        of ksymbol: return fmt"[t: {x.t}, v: {x.v2}]"
+        of klist: return fmt"[t: {x.t}, v: {x.v3}]"
+        of kdictionary: return fmt"[t: ${x.t}, v: {x.v4}]"
+        of kfunction: return fmt"[t: {x.t}, v: {x.v5}]"
 
 
 proc klen*(x: Katom): Katom = 
