@@ -33,6 +33,7 @@ type
         v5*: string
       of knil: v11: string
 
+proc kn*(v: string): Katom = Katom(t: knil, v11: v) # create a knil Katom with string message
 proc kn*(): Katom = Katom(t: knil, v11: "NIL") # create a knil Katom
 proc kn*(v: float): Katom = Katom(t: knumber, v0: v) # create a knumber Katom with float as input
 proc kn*(v: int): Katom = Katom(t: knumber, v0: v.toFloat) # create a knumber Katom with int as input
@@ -49,10 +50,12 @@ proc kln*(v: seq[int]): Katom = Katom(t: klist, ltype: knumber, rank: kn(1), v3:
 # create a function nde with 2 children
 proc kf*(v: string, left: Katom, right: Katom): Katom = Katom(t: kfunction, left: left, right: right, v5: v)
 # create a function nde with right children only
-proc kf*(v: string, right: Katom): Katom = Katom(t: kfunction, left: kn(), right: right, v5: v)
+proc kfr*(v: string, right: Katom): Katom = Katom(t: kfunction, left: kn(), right: right, v5: v)
 # create a function nde with left children only
-proc kf*(v: string, left: Katom): Katom = Katom(t: kfunction, left: left, right: kn(), v5: v)
+proc kfl*(v: string, left: Katom): Katom = Katom(t: kfunction, left: left, right: kn(), v5: v)
 
+# check if Katom is of type knil
+proc isNil*(x: Katom): bool = x.t == knil
 
 # similar to toString() method in Java for pretty print to console
 proc `$`*(x: Katom): string = 
@@ -99,12 +102,22 @@ proc `==`*(x: Katom, y: Katom): bool =
         else:
           return kzip(x.v3, y.v3).map(proc(xy: tuple[a: Katom, b: Katom]): bool = xy.a == xy.b).count(true) == klen(x).v0.toInt
       of kdictionary: return false # TODO
-      of kfunction: return false # TODO
+      of kfunction: 
+        if x.v5 == x.v5: 
+          return (x.left == y.left and x.right == y.right)
+        else: 
+          return false
       of knil: return x.v11 == y.v11
 
 # dyadic plus
 proc d_plus*(left: Katom, right: Katom): Katom =
-  if left.t == knumber and right.t == knumber:
+  if left.isNil and right.isNil:
+    result = kn("domain error.") 
+  if left.isNil:
+    result = right
+  if right.isNil:
+    result = kf("+", left, right)
+  elif left.t == knumber and right.t == knumber:
     result = kn(left.v0 + right.v0)
   elif left.t == knumber and right.t == klist:
     result = kl(map(right.v3, proc(x: Katom): Katom = d_plus(left, x)))
@@ -113,8 +126,11 @@ proc d_plus*(left: Katom, right: Katom): Katom =
   elif left.t == klist and right.t == klist:
     if klen(left).v0 == klen(right).v0:
       result = kl(zip(left.v3, right.v3).map(proc(xy: tuple[a: Katom, b: Katom]): Katom = d_plus(xy.a, xy.b)))
+    else:
+      result = kn("length error.")
   else:
-    echo "domain error."
+    result = kn("domain error.")
+  return result
 
 # method to apply functions to left, right nodes of ast
 proc applyfunction(f: Katom, left: Katom, right: Katom): Katom =
@@ -126,9 +142,12 @@ proc applyfunction(f: Katom, left: Katom, right: Katom): Katom =
 # maineval method on top of ast
 proc eval*(node: Katom): Katom =
   if node.t == kfunction:
-    echo "function node"
     if not node.left.isNil and not node.right.isNil:
       return applyfunction(node, eval(node.left), eval(node.right))
+    elif node.left.isNil:
+      return node.right
+    else:
+      return node
   return node
 
 

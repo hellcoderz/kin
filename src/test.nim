@@ -35,3 +35,11 @@ suite "Testing eval function":
     test "with d_plus and left + right nodes":
         var ast = kf("+", kn(5), kn(6))
         check eval(ast) == kn(11)
+
+    test "with d_plus right node only":
+        var ast = kfr("+", kl(@[kn(5), kn(6)]))
+        check eval(ast) == kl(@[kn(5), kn(6)])
+
+    test "with d_plus left node only":
+        var ast = kfl("+", kl(@[kn(5), kn(6)]))
+        check eval(ast) == ast
