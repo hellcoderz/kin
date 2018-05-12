@@ -1,7 +1,7 @@
-import tables, sequtils
+import tables, sequtils, strutils
 
 type
-    Ktype = enum
+    Ktype* = enum
       knumber=0,
       kchar=1,
       ksymbol=2,
@@ -17,9 +17,9 @@ type
       # kcond=12,
       # kquote=13
 
-    Ktuple = tuple[x: Katom, y: Katom]
+    Ktuple* = tuple[x: Katom, y: Katom]
 
-    Katom = ref object
+    Katom* = ref object
       case t: Ktype
       of knumber: v0: float
       of kchar: v1: char
@@ -30,13 +30,22 @@ type
         left, right: Katom
         v5: string
 
-proc kn(v: float): Katom = Katom(t: knumber, v0: v)
-proc kn(v: int): Katom = Katom(t: knumber, v0: v.toFloat)
-proc ks(v: string): Katom = Katom(t: ksymbol, v2: v)
-proc kl(v: seq[Katom]): Katom = Katom(t: klist, v3: v)
+proc kn*(v: float): Katom = Katom(t: knumber, v0: v)
+proc kn*(v: int): Katom = Katom(t: knumber, v0: v.toFloat)
+proc ks*(v: string): Katom = Katom(t: ksymbol, v2: v)
+proc kl*(v: seq[Katom]): Katom = Katom(t: klist, v3: v)
+
+proc `$`*(x: Katom): string = 
+        case x.t
+        of knumber: return fmt"{t: ${x.t}, v: ${x.v0}}"
+        of kchar: return fmt"{t: ${x.t}, v: ${x.v1}}"
+        of ksymbol: return fmt"{t: ${x.t}, v: ${x.v2}}"
+        of klist: return fmt"{t: ${x.t}, v: ${x.v3}}"
+        of kdictionary: return fmt"{t: ${x.t}, v: ${x.v4}}"
+        of kfunction: return fmt"{t: ${x.t}, v: ${x.v5}}"
 
 
-proc klen(x: Katom): Katom = 
+proc klen*(x: Katom): Katom = 
         case x.t
         of knumber: return kn(1)
         of kchar: return kn(1)
@@ -45,7 +54,7 @@ proc klen(x: Katom): Katom =
         of kdictionary: return kn(x.v4.len)
         of kfunction: return kn(1)
 
-proc zip(x: seq[Katom], y: seq[Katom]): seq[Ktuple] =
+proc zip*(x: seq[Katom], y: seq[Katom]): seq[Ktuple] =
   if x.len == y.len:
     result = zip(x, y)
   else:
@@ -54,7 +63,7 @@ proc zip(x: seq[Katom], y: seq[Katom]): seq[Ktuple] =
 
 
 
-proc d_plus(left: Katom, right: Katom): Katom =
+proc d_plus*(left: Katom, right: Katom): Katom =
   if left.t == knumber and right.t == knumber:
     result = kn(left.v0 + right.v0)
   elif left.t == knumber and right.t == klist:
