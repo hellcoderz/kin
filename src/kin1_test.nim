@@ -11,12 +11,21 @@ echo x
 echo y
 echo kstr("hello world")
 
-echo applyverb("plus", x, y)
-echo applyverb("plus", x, l1)
-echo applyverb("plus", l1, l1)
-echo applyverb("plus", l1, l2)
+echo applyverb(kplus, x, y)
+echo applyverb(kplus, x, l1)
+echo applyverb(kplus, l1, l1)
+echo applyverb(kplus, l1, l2)
 
-echo applyverb("minus", x, y)
-echo applyverb("minus", x, l1)
-echo applyverb("minus", l1, l1)
-echo applyverb("minus", l1, l2)
+echo applyverb(kminus, x, y)
+echo applyverb(kminus, x, l1)
+echo applyverb(kminus, l1, l1)
+echo applyverb(kminus, l1, l2)
+
+var
+    plusfn = kf(kplus, x, y)
+    minusfn = kf(kminus, x, y)
+    plusplusfn = kf(kplus, kf(kplus, x, y), kf(kplus, x, y))
+
+echo eval(plusfn)
+echo eval(minusfn)
+echo eval(plusplusfn)
