@@ -23,16 +23,7 @@ type
     KatomType* = enum
         kcharatom=0,
         kintatom=1,
-        kfloatatom=2,
-
-    Kverb* = enum # K build-in verbs
-        kplus=0,
-        kminus=1,
-        kmul=2,
-        kpercent=3,
-        khash=4,
-        kbang=5,
-        # TODO: add more
+        kfloatatom=2
     
     Kadverb* = enum # K build-in verbs
         kfslash=0
@@ -53,7 +44,7 @@ type
     Klist* = ref object of Kobj
         v: seq[Kobj]
     Kfunction* = ref object of Kobj
-        v: Kverb
+        v: string
         a: Kadverb
         left: Kobj
         right: Kobj
@@ -72,7 +63,7 @@ proc f*(x: int): float = x.toFloat                                  # convert in
 proc kstr*(s: string): Kobj = Klist(t: klist, v: s.map(proc(c: char): Kobj = kc(c)))
 proc ks*(s: string): Kobj = Ksymbol(v: s)
 
-proc kfn*(v: Kverb, left: Kobj, right: Kobj): Kobj = Kfunction(t: kfunction, v: v, left: left, right: right)
+proc kfn*(v: string, left: Kobj, right: Kobj): Kobj = Kfunction(t: kfunction, v: v, left: left, right: right)
 
 proc klen*(x: Klist): int = x.v.len
 
@@ -102,18 +93,18 @@ proc `$`*(x: Kobj): string =
 
 
 ##### FUNCTION TABLES ########
-var fn_kchar_kchar* = initTable[Kverb, proc(x: Kchar, y: Kchar): Kobj]()
-var fn_kint_kint* = initTable[Kverb, proc(x: Kint, y: Kint): Kobj]()
-var fn_kfloat_kfloat* = initTable[Kverb, proc(x: Kfloat, y: Kfloat): Kobj]()
+var fn_kchar_kchar* = initTable[string, proc(x: Kchar, y: Kchar): Kobj]()
+var fn_kint_kint* = initTable[string, proc(x: Kint, y: Kint): Kobj]()
+var fn_kfloat_kfloat* = initTable[string, proc(x: Kfloat, y: Kfloat): Kobj]()
 
-var fn_kchar_kint* = initTable[Kverb, proc(x: Kchar, y: Kint): Kobj]()
-var fn_kint_kchar* = initTable[Kverb, proc(x: Kint, y: Kchar): Kobj]()
+var fn_kchar_kint* = initTable[string, proc(x: Kchar, y: Kint): Kobj]()
+var fn_kint_kchar* = initTable[string, proc(x: Kint, y: Kchar): Kobj]()
 
-var fn_kchar_kfloat* = initTable[Kverb, proc(x: Kchar, y: Kfloat): Kobj]()
-var fn_kfloat_kchar* = initTable[Kverb, proc(x: Kfloat, y: Kchar): Kobj]()
+var fn_kchar_kfloat* = initTable[string, proc(x: Kchar, y: Kfloat): Kobj]()
+var fn_kfloat_kchar* = initTable[string, proc(x: Kfloat, y: Kchar): Kobj]()
 
-var fn_kint_kfloat* = initTable[Kverb, proc(x: Kint, y: Kfloat): Kobj]()
-var fn_kfloat_kint* = initTable[Kverb, proc(x: Kfloat, y: Kint): Kobj]()
+var fn_kint_kfloat* = initTable[string, proc(x: Kint, y: Kfloat): Kobj]()
+var fn_kfloat_kint* = initTable[string, proc(x: Kfloat, y: Kint): Kobj]()
 
 ###### VERBS #########
 # plus: +
@@ -130,18 +121,18 @@ proc plus*(x: Kfloat, y: Kchar): Kobj = kf(x.v + f(y.v))
 proc plus*(x: Kint, y: Kfloat): Kobj = kf(f(x.v) + y.v)
 proc plus*(x: Kfloat, y: Kint): Kobj = kf(x.v + f(y.v))
 
-fn_kchar_kchar[kplus] = plus
-fn_kint_kint[kplus] = plus
-fn_kfloat_kfloat[kplus] = plus
+fn_kchar_kchar["+"] = plus
+fn_kint_kint["+"] = plus
+fn_kfloat_kfloat["+"] = plus
 
-fn_kchar_kint[kplus] = plus
-fn_kint_kchar[kplus] = plus
+fn_kchar_kint["+"] = plus
+fn_kint_kchar["+"] = plus
 
-fn_kchar_kfloat[kplus] = plus
-fn_kfloat_kchar[kplus] = plus
+fn_kchar_kfloat["+"] = plus
+fn_kfloat_kchar["+"] = plus
 
-fn_kint_kfloat[kplus] = plus
-fn_kfloat_kint[kplus] = plus
+fn_kint_kfloat["+"] = plus
+fn_kfloat_kint["+"] = plus
 
 # plus: -
 proc minus*(x: Kchar, y: Kchar): Kobj = ki(x.v - y.v)
@@ -157,22 +148,22 @@ proc minus*(x: Kfloat, y: Kchar): Kobj = kf(x.v - f(y.v))
 proc minus*(x: Kint, y: Kfloat): Kobj = kf(f(x.v) - y.v)
 proc minus*(x: Kfloat, y: Kint): Kobj = kf(x.v - f(y.v))
 
-fn_kchar_kchar[kminus] = minus
-fn_kint_kint[kminus] = minus
-fn_kfloat_kfloat[kminus] = minus
+fn_kchar_kchar["-"] = minus
+fn_kint_kint["-"] = minus
+fn_kfloat_kfloat["-"] = minus
 
-fn_kchar_kint[kminus] = minus
-fn_kint_kchar[kminus] = minus
+fn_kchar_kint["-"] = minus
+fn_kint_kchar["-"] = minus
 
-fn_kchar_kfloat[kminus] = minus
-fn_kfloat_kchar[kminus] = minus
+fn_kchar_kfloat["-"] = minus
+fn_kfloat_kchar["-"] = minus
 
-fn_kint_kfloat[kminus] = minus
-fn_kfloat_kint[kminus] = minus
+fn_kint_kfloat["-"] = minus
+fn_kfloat_kint["-"] = minus
 
 #### APLLY VERB FUNCTION ######
-proc applyverb*(verb: Kverb, x: Kobj, y: Kobj): Kobj
-proc applyverb*(verb: Kverb, x: Katom, y: Katom): Kobj = 
+proc applyverb*(verb: string, x: Kobj, y: Kobj): Kobj
+proc applyverb*(verb: string, x: Katom, y: Katom): Kobj = 
     # echo x.at
     case x.at
     of kcharatom:
@@ -194,12 +185,12 @@ proc applyverb*(verb: Kverb, x: Katom, y: Katom): Kobj =
         of kintatom: return fn_kfloat_kint[verb](Kfloat(x), Kint(y))
         of kfloatatom: return fn_kfloat_kfloat[verb](Kfloat(x), Kfloat(y))
 
-proc applyverb*(verb: Kverb, x: Klist, y: Klist): Kobj = 
+proc applyverb*(verb: string, x: Klist, y: Klist): Kobj = 
         case x.klen == y.klen
         of true: return kl(kzip(x.v, y.v).map(proc(xy: tuple[a: Kobj, b: Kobj]): KObj = applyverb(verb, xy.a, xy.b)))
         of false: return kn("LENGTH ERROR.")
 
-proc applyverb*(verb: Kverb, x: Kobj, y: Kobj): Kobj =
+proc applyverb*(verb: string, x: Kobj, y: Kobj): Kobj =
     case x.t
     of katom:
         case y.t
