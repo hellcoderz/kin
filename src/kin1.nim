@@ -66,6 +66,10 @@ proc ks*(s: string): Kobj = Ksymbol(v: s)
 proc kfn*(v: string, left: Kobj, right: Kobj): Kobj = Kfunction(t: kfunction, v: v, left: left, right: right)
 
 proc klen*(x: Klist): int = x.v.len
+proc klen*(x: Kobj): int = 
+    case x.t
+    of klist: return Klist(x).klen
+    else: return 1
 
 # method to zip 2 array into tuples
 proc kzip*(x: seq[Kobj], y: seq[Kobj]): seq[tuple[a: Kobj, b: Kobj]] = return zip(x, y)
