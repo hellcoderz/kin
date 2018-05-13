@@ -60,21 +60,19 @@ type
     Knil* = ref object of Kobj
         v: string
 
-proc kl*(x: seq[Kobj]): Kobj = Klist(t: klist, v: x)
-proc ki*(x: int): Kobj = Kint(t: katom, at:kintatom, v: x)
-proc kf*(x: float): Kobj = Kfloat(t: katom, at: kfloatatom, v: x)
-proc kc*(x: char): Kobj = Kchar(t: katom, at: kcharatom, v: int(x))
-proc kn*(): Kobj = Knil(t:knil, v: "NIL.")
-proc kn*(x: string): Kobj = Knil(t: knil, v: x)
+proc kl*(x: seq[Kobj]): Kobj = Klist(t: klist, v: x)                # create list obj "1 2 3"
+proc ki*(x: int): Kobj = Kint(t: katom, at:kintatom, v: x)          # create int obj "1"
+proc kf*(x: float): Kobj = Kfloat(t: katom, at: kfloatatom, v: x)   # create float obj "1.5"
+proc kc*(x: char): Kobj = Kchar(t: katom, at: kcharatom, v: int(x)) # create char obj "'c'"
+proc kn*(): Kobj = Knil(t:knil, v: "NIL.")                          # create nil obj
+proc kn*(x: string): Kobj = Knil(t: knil, v: x)                     # create nil obj with message
 
-proc c*(x: Kint): Kobj = kf(x.v.toFloat)
-
-proc f*(x: int): float = x.toFloat
+proc f*(x: int): float = x.toFloat                                  # convert int object to float
 
 proc kstr*(s: string): Kobj = Klist(t: klist, v: s.map(proc(c: char): Kobj = kc(c)))
 proc ks*(s: string): Kobj = Ksymbol(v: s)
 
-proc kf*(v: Kverb, left: Kobj, right: Kobj): Kobj = Kfunction(t: kfunction, v: v, left: left, right: left)
+proc kfn*(v: Kverb, left: Kobj, right: Kobj): Kobj = Kfunction(t: kfunction, v: v, left: left, right: right)
 
 proc klen*(x: Klist): int = x.v.len
 
@@ -102,6 +100,7 @@ proc `$`*(x: Kobj): string =
     of kfunction: return Kfunction(x).`$`
     return "PRINT ERROR."
 
+
 ##### FUNCTION TABLES ########
 var fn_kchar_kchar* = initTable[Kverb, proc(x: Kchar, y: Kchar): Kobj]()
 var fn_kint_kint* = initTable[Kverb, proc(x: Kint, y: Kint): Kobj]()
@@ -115,7 +114,6 @@ var fn_kfloat_kchar* = initTable[Kverb, proc(x: Kfloat, y: Kchar): Kobj]()
 
 var fn_kint_kfloat* = initTable[Kverb, proc(x: Kint, y: Kfloat): Kobj]()
 var fn_kfloat_kint* = initTable[Kverb, proc(x: Kfloat, y: Kint): Kobj]()
-
 
 ###### VERBS #########
 # plus: +
@@ -172,22 +170,25 @@ fn_kfloat_kchar[kminus] = minus
 fn_kint_kfloat[kminus] = minus
 fn_kfloat_kint[kminus] = minus
 
-
 #### APLLY VERB FUNCTION ######
 proc applyverb*(verb: Kverb, x: Kobj, y: Kobj): Kobj
 proc applyverb*(verb: Kverb, x: Katom, y: Katom): Kobj = 
+    # echo x.at
     case x.at
     of kcharatom:
+        # echo y.at
         case y.at
         of kcharatom: return fn_kchar_kchar[verb](Kchar(x), Kchar(y))
         of kintatom: return fn_kchar_kint[verb](Kchar(x), Kint(y))
         of kfloatatom: return fn_kchar_kfloat[verb](Kchar(x), Kfloat(y))
     of kintatom:
+        # echo y.at
         case y.at
         of kcharatom: return fn_kint_kchar[verb](Kint(x), Kchar(y))
         of kintatom: return fn_kint_kint[verb](Kint(x), Kint(y))
         of kfloatatom: return fn_kint_kfloat[verb](Kint(x), Kfloat(y))
     of kfloatatom:
+        # echo y.at
         case y.at
         of kcharatom: return fn_kfloat_kchar[verb](Kfloat(x), Kchar(y))
         of kintatom: return fn_kfloat_kint[verb](Kfloat(x), Kint(y))

@@ -6,6 +6,7 @@ var
     # s1 = Klist(v: @[Kchar(v: 45), Kchar(v: 56)])
     l1 = kl(@[ki(1), ki(2)])
     l2 = kl(@[ki(1), ki(2), kf(4.5)])
+    l3 = kl(@[kf(6.7), l1, l2])
 
 echo x
 echo y
@@ -21,10 +22,12 @@ echo applyverb(kminus, x, l1)
 echo applyverb(kminus, l1, l1)
 echo applyverb(kminus, l1, l2)
 
+echo applyverb(kplus, ki(1), l3)
+
 var
-    plusfn = kf(kplus, x, y)
-    minusfn = kf(kminus, x, y)
-    plusplusfn = kf(kplus, kf(kplus, x, y), kf(kplus, x, y))
+    plusfn = kfn(kplus, x, y)
+    minusfn = kfn(kminus, x, y)
+    plusplusfn = kfn(kplus, kfn(kplus, x, y), kfn(kplus, x, y))
 
 echo eval(plusfn)
 echo eval(minusfn)
