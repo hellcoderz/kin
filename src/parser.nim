@@ -45,7 +45,7 @@ var tokenType2regex = {
     r_close_p: CLOSE_P, r_close_c: CLOSE_C, r_spaceornot: SPACEORNOT,
 }.toTable
 
-# Tokenizer Grammar
+# Tokenizer Grammar for producing correct tokens
 var grammar = {
     t_start: @[
                 @[r_string, r_verb, r_string],
