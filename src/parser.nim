@@ -56,14 +56,14 @@ var grammar = {
     t_atom: @[@[r_string], @[r_bool], @[r_number]]
 }.toTable
 
-proc getTokenStates(tokens: seq[Token]): seq[TokenType] = 
+proc getTokenStates*(tokens: seq[Token]): seq[TokenType] = 
     if tokens.len > 0:
         return tokens.map(proc(token: Token): TokenType = token.tokType)
     else:
         return @[]
 
-proc `$`(token: Token): string = fmt"token: {token.tok}   tokenType: {token.tokType}"
-proc `$`(tokenTypes: seq[TokenType]): string = 
+proc `$`*(token: Token): string = fmt"token: {token.tok}   tokenType: {token.tokType}"
+proc `$`*(tokenTypes: seq[TokenType]): string = 
     if tokenTypes.len > 0:
         return tokenTypes.map(proc(tokenType: TokenType): string = tokenType.`$`).foldl(a & "|" & b)
     else:
@@ -97,7 +97,7 @@ proc tokenize(s: TokenType, p: string, tokens: seq[Token]): TokenTuple =
                         np = res.left
     return (tokens: ntokens, left: np)
 
-proc tokenize(p: string): seq[Token] =
+proc tokenize*(p: string): seq[Token] =
     var tokensTuple = tokenize(t_start, p.strip, @[])
     return tokensTuple.tokens
 
