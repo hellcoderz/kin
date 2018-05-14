@@ -5,7 +5,7 @@ var HEXLIT*  = re"(^0x[a-zA-Z\d]+)"
 var BOOL*    = re"(?i:^[01]+b)"
 var NAME*    = re"(?i:^[a-z][a-z\d]*)"
 var SYMBOL*  = re"(?i:^`([a-z.][a-z0-9.]*)?)"
-var STRING*  = re""" ^"(\\.|[^"\\\r\n])*" """
+var STRING*  = re"""^"(\\.|[^"\\\r\n])*"?"""
 var VERB*    = re"^[+\-*%!&|<>=~,^#_$?@.]"
 var ASSIGN*  = re"^[+\-*%!&|<>=~,^#_$?@.]:"
 var IOVERB*  = re"^\d:"
@@ -23,18 +23,18 @@ var CLOSE_P* = re"^\)"
 var CLOSE_C* = re"^}"
 var SPACEORNOT* = re"^\s*"
 
-type ParseState = enum
+type TokenType = enum
     r_number, r_hexlit, r_bool,
     r_name, r_symbol, r_string, r_verb,
     r_assign, r_ioverb, r_adverb, r_semi,
     r_colon, r_view, r_cond, r_dict,
     r_open_b, r_open_p, r_open_c, r_close_b,
     r_close_p, r_close_c, r_spaceornot,
-    p_start
+    t_start, t_atom, t_list
 
 type Token = ref object of RootObj
     tok: string
-    tokType: ParseState
+    tokType: TokenType
 
 var state2regex = {
     r_number: NUMBER, r_hexlit: HEXLIT, r_bool: BOOL,
@@ -46,33 +46,61 @@ var state2regex = {
 }.toTable
 
 var stateTable = {
-    p_start: @[@[r_number, r_verb, r_number]]
+    t_start: @[
+                @[r_string, r_verb, r_string],
+                @[r_string, r_verb, r_number], 
+                @[r_number, r_verb, r_string], 
+                @[r_number, r_verb, r_number], 
+                @[r_number], 
+                @[r_string]
+            ],
+    t_atom: @[@[r_string, r_bool, r_number]]
 }.toTable
 
+proc getTokenStates(tokens: seq[Token]): seq[TokenType] = tokens.map(proc(token: Token): TokenType = token.tokType)
 
-proc `$`(token: Token): string =
-    return fmt"token: {token.tok}   tokenType: {token.tokType}"
+proc `$`(token: Token): string = fmt"token: {token.tok}   tokenType: {token.tokType}"
+proc `$`(tokenTypes: seq[TokenType]): string = tokenTypes.map(proc(tokenType: TokenType): string = tokenType.`$`).foldl(a & "|" & b)
 
-proc parse(s: ParseState, p: string) =
+proc tokenize(s: TokenType, p: string, tokens: seq[Token]): seq[Token] =
     var np = p
-    for and_states in stateTable[s]:
-        for and_state in and_states:
-            if and_state in state2regex:
-                var match = np.find(state2regex[and_state])
-                if match.isSome():
-                    var token = Token(tok: match.get().`$`, tokType: and_state)
-                    echo token
-                    np = np[match.get().captureBounds[-1].get().b+1..<np.len].strip
-                else:
-                    echo "error parsing: " & np
-                    break
-            else:
-                parse(and_state, np)
+    var ntokens = tokens
+    if np.len == 0:
+        return ntokens
+    
+    block b1:
+        for and_states in stateTable[s]:
+            # echo "and_states: " & and_states.`$`
+            block b2:
+                for and_state in and_states:
+                    if np.len == 0:
+                        return ntokens
+                    if and_state in state2regex:
+                        var match = np.find(state2regex[and_state])
+                        if match.isSome():
+                            var token = Token(tok: match.get().`$`, tokType: and_state)
+                            # echo token
+                            ntokens = ntokens.concat(@[token])
+                            np = np[match.get().captureBounds[-1].get().b+1..<np.len].strip
+                        else:
+                            break b2
+                    else:
+                        ntokens = tokenize(and_state, np, ntokens)
+    return ntokens
 
-proc parse(p: string) =
-    parse(p_start, p.strip)
+proc tokenize(p: string): seq[Token] =
+    return tokenize(t_start, p.strip, @[])
 
 
 if isMainModule:
     echo "Parsing Module for K Language implementation in Nim [v0.0.1]"
-    parse("36.78   +   467.89")
+
+    var programs = @[
+        "36.78   +   467.89",
+        "45.67",
+        "\"hello world\"",
+        "1+\"hello\""
+    ]
+
+    for program in programs:
+        echo program & " => " & tokenize(program).getTokenStates().`$`

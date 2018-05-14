@@ -30,3 +30,6 @@ suite "Testing Regexes":
         echo " ".find(SPACEORNOT)
         echo "              ".find(SPACEORNOT)
         echo "".find(SPACEORNOT)
+
+    test "STRING":
+        echo "\"hello world\"".find(STRING)
