@@ -1,217 +1,224 @@
 import tables, sequtils, strformat
 
 type
-  Kverb* = enum # K build-in verbs
-    kplus=0,
-    kminus=1,
-    kmul=2,
-    kpercent=3,
-    khash=4,
-    kbang=5,
-    # TODO: add more
+    Ktype* = enum # K built-in and only supported datatypes
+        # knumber,
+        # kchar,
+        katom,
+        # ksymbol,
+        klist,
+        # kdictionary,
+        kfunction,
+        knil,
+        
+        # kview=6,
+        # knameref=7,
+        # kverb=8,
+        # kadverb=9,
+        # kreturn=10,
+        # knil=11,
+        # kcond=12,
+        # kquote=13
 
-  Kstate = enum # states of left and right node only
-    lrnil=0,  # left and right node are both nil
-    rnil=1,   # only right node is nil
-    lnil=2    # only left node is nil
-    rl=3,
-    ll=4,
-    llrl=5
+    KatomType* = enum
+        kcharatom=0,
+        kintatom=1,
+        kfloatatom=2
+    
+    Kadverb* = enum # K build-in verbs
+        kfslash=0
+        # TODO: add more
 
-  Ktype* = enum # K built-in and only supported datatypes
-    knumber=0,
-    kchar=1,
-    ksymbol=2,
-    klist=3
-    kdictionary=4,
-    kfunction=5,
-    knil=6,
-    # kview=6,
-    # knameref=7,
-    # kverb=8,
-    # kadverb=9,
-    # kreturn=10,
-    # knil=11,
-    # kcond=12,
-    # kquote=13
+    Kobj* = ref object of RootObj
+        t: Ktype
+    Katom* = ref object of Kobj
+        at: KatomType
+    Kfloat* = ref object of Katom
+        v: float
+    Kint* = ref object of Katom
+        v: int
+    Kchar* = ref object of Katom
+        v: int
+    Ksymbol* = ref object of Kobj
+        v: string
+    Klist* = ref object of Kobj
+        v: seq[Kobj]
+    Kfunction* = ref object of Kobj
+        v: string
+        a: Kadverb
+        left: Kobj
+        right: Kobj
+    Knil* = ref object of Kobj
+        v: string
 
-  Katom* = ref object # main K object for AST
-    case t: Ktype
-    of knumber: v0*: float
-    of kchar: v1*: int
-    of ksymbol: v2*: string
-    of klist:
-      rank*: Katom
-      ltype*: Ktype
-      v3*: seq[Katom]
-    of kdictionary: v4*: TableRef[Katom, Katom]
-    of kfunction:
-      left*, right*: Katom
-      op*: Kverb
-    of knil: v11: string
+proc kl*(x: seq[Kobj]): Kobj = Klist(t: klist, v: x)                # create list obj "1 2 3"
+proc ki*(x: int): Kobj = Kint(t: katom, at:kintatom, v: x)          # create int obj "1"
+proc kf*(x: float): Kobj = Kfloat(t: katom, at: kfloatatom, v: x)   # create float obj "1.5"
+proc kc*(x: char): Kobj = Kchar(t: katom, at: kcharatom, v: int(x)) # create char obj "'c'"
+proc kn*(): Kobj = Knil(t:knil, v: "NIL.")                          # create nil obj
+proc kn*(x: string): Kobj = Knil(t: knil, v: x)                     # create nil obj with message
 
-########################################
-##### KATOM CREATATION FUNCTIONS #######
-########################################
-proc kn*(v: string): Katom = Katom(t: knil, v11: v) # create a knil Katom with string message
-proc kn*(): Katom = Katom(t: knil, v11: "NIL") # create a knil Katom
-proc kn*(v: float): Katom = Katom(t: knumber, v0: v) # create a knumber Katom with float as input
-proc kn*(v: int): Katom = Katom(t: knumber, v0: v.toFloat) # create a knumber Katom with int as input
-proc ks*(v: string): Katom = Katom(t: ksymbol, v2: v) # create a ksymbol Katom
-proc kl*(v: seq[Katom]): Katom = Katom(t: klist, v3: v) # create a klist Katom with seq of any type of Katom
-proc kc*(v: int): Katom = Katom(t: kchar, v1: v) # create a kchar Katom with ascii value as input
-proc kc*(v: char): Katom = Katom(t: kchar, v1: int(v)) # create a kchar Katom with char as input
-# create a klist Katom with seq of kchar Katom (represents string data type)
-proc klc*(v: string): Katom = Katom(t: klist, ltype: kchar, rank: kn(1), v3: toSeq(v.items).map(proc(c: char): Katom = kc(c)))
-# create a klist Katom with seq of knumber[float] katom
-proc kln*(v: seq[float]): Katom = Katom(t: klist, ltype: knumber, rank: kn(1), v3: v.map(proc(n: float): Katom = kn(n)))
-# create a klist Katom with seq of knumber[int] katom
-proc kln*(v: seq[int]): Katom = Katom(t: klist, ltype: knumber, rank: kn(1), v3: v.map(proc(n: int): Katom = kn(n)))
-# create a function nde with 2 children
-proc kf*(v: Kverb, left: Katom, right: Katom): Katom = Katom(t: kfunction, left: left, right: right, op: v)
-# create a function nde with right children only
-proc kfr*(v: Kverb, right: Katom): Katom = Katom(t: kfunction, left: kn(), right: right, op: v)
-# create a function nde with left children only
-proc kfl*(v: Kverb, left: Katom): Katom = Katom(t: kfunction, left: left, right: kn(), op: v)
+proc f*(x: int): float = x.toFloat                                  # convert int object to float
 
-###################################
-##### UTILITIES FUNCTION ##########
-###################################
-# check if Katom is of type knil
-proc isNil*(x: Katom): bool = x.t == knil
+proc kstr*(s: string): Kobj = Klist(t: klist, v: s.map(proc(c: char): Kobj = kc(c)))
+proc ks*(s: string): Kobj = Ksymbol(v: s)
 
-# similar to toString() method in Java for pretty print to console
-proc `$`*(x: Katom): string = 
-  case x.t
-  of knumber: return fmt"[t: {x.t}, v: {x.v0}]"
-  of kchar: return fmt"[t: {x.t}, v: {x.v1}]"
-  of ksymbol: return fmt"[t: {x.t}, v: {x.v2}]"
-  of klist: return fmt"[t: {x.t}, v: {x.v3}]"
-  of kdictionary: return fmt"[t: ${x.t}, v: {x.v4}]"
-  of kfunction: return fmt"[t: {x.t}, v: {x.op}, left: {x.left}, right: {x.right}]"
-  of knil: return fmt"[t: {x.t}, v: {x.v11}]"
+proc kfn*(v: string, left: Kobj, right: Kobj): Kobj = Kfunction(t: kfunction, v: v, left: left, right: right)
 
-# method to return length of all type Katom as knumber Katom (very powerfull APL style)
-proc klen*(x: Katom): Katom =
-  case x.t
-  of knumber: return kn(1)
-  of kchar: return kn(1)
-  of ksymbol: return kn(1)
-  of klist: return kn(x.v3.len)
-  of kdictionary: return kn(x.v4.len)
-  of kfunction: return kn(1)
-  of knil: return kn(1)
+proc klen*(x: Klist): int = x.v.len
+proc klen*(x: Kobj): int = 
+    case x.t
+    of klist: return Klist(x).klen
+    else: return 1
 
 # method to zip 2 array into tuples
-proc kzip*(x: seq[Katom], y: seq[Katom]): seq[tuple[a: Katom, b: Katom]] =
-  if x.len == y.len:
-    result = zip(x, y)
-  else:
-    echo "length error."
-    result = @[]
+proc kzip*(x: seq[Kobj], y: seq[Kobj]): seq[tuple[a: Kobj, b: Kobj]] = return zip(x, y)
 
-# equality check for testing
-proc `==`*(x: Katom, y: Katom): bool = 
-  if x.t != y.t:
-    return false
-  else:
+# printing utilities
+proc `$`*(x: Kfloat): string = x.v.`$` & " "
+proc `$`*(x: Kint): string = x.v.`$` & " "
+proc `$`*(x: Kchar): string = char(x.v).`$`
+proc `$`*(x: Kfunction): string = x.v.`$`
+
+proc `$`*(x: Katom): string =
+    case x.at
+    of kcharatom: return Kchar(x).`$`
+    of kintatom: return Kint(x).`$`
+    of kfloatatom: return Kfloat(x).`$`
+
+proc `$`*(x: Kobj): string =
+    # echo x.t
     case x.t
-    of knumber: return x.v0 == y.v0
-    of kchar: return x.v1 == y.v1
-    of ksymbol: return x.v2 == x.v2
+    of katom: return Katom(x).`$`
+    of klist: return Klist(x).v.map(proc(k: Kobj): string = k.`$`).foldl(a & b)
+    of knil: return Knil(x).v
+    of kfunction: return Kfunction(x).`$`
+    return "PRINT ERROR."
+
+
+##### FUNCTION TABLES ########
+var fn_kchar_kchar* = initTable[string, proc(x: Kchar, y: Kchar): Kobj]()
+var fn_kint_kint* = initTable[string, proc(x: Kint, y: Kint): Kobj]()
+var fn_kfloat_kfloat* = initTable[string, proc(x: Kfloat, y: Kfloat): Kobj]()
+
+var fn_kchar_kint* = initTable[string, proc(x: Kchar, y: Kint): Kobj]()
+var fn_kint_kchar* = initTable[string, proc(x: Kint, y: Kchar): Kobj]()
+
+var fn_kchar_kfloat* = initTable[string, proc(x: Kchar, y: Kfloat): Kobj]()
+var fn_kfloat_kchar* = initTable[string, proc(x: Kfloat, y: Kchar): Kobj]()
+
+var fn_kint_kfloat* = initTable[string, proc(x: Kint, y: Kfloat): Kobj]()
+var fn_kfloat_kint* = initTable[string, proc(x: Kfloat, y: Kint): Kobj]()
+
+###### VERBS #########
+# plus: +
+proc plus*(x: Kchar, y: Kchar): Kobj = ki(x.v + y.v)
+proc plus*(x: Kint, y: Kint): Kobj = ki(x.v + y.v)
+proc plus*(x: Kfloat, y: Kfloat): Kobj = kf(x.v + y.v)
+
+proc plus*(x: Kchar, y: Kint): Kobj = ki(x.v + y.v)
+proc plus*(x: Kint, y: Kchar): Kobj = ki(x.v + y.v)
+
+proc plus*(x: Kchar, y: Kfloat): Kobj = kf(f(x.v) + y.v)
+proc plus*(x: Kfloat, y: Kchar): Kobj = kf(x.v + f(y.v))
+
+proc plus*(x: Kint, y: Kfloat): Kobj = kf(f(x.v) + y.v)
+proc plus*(x: Kfloat, y: Kint): Kobj = kf(x.v + f(y.v))
+
+fn_kchar_kchar["+"] = plus
+fn_kint_kint["+"] = plus
+fn_kfloat_kfloat["+"] = plus
+
+fn_kchar_kint["+"] = plus
+fn_kint_kchar["+"] = plus
+
+fn_kchar_kfloat["+"] = plus
+fn_kfloat_kchar["+"] = plus
+
+fn_kint_kfloat["+"] = plus
+fn_kfloat_kint["+"] = plus
+
+# plus: -
+proc minus*(x: Kchar, y: Kchar): Kobj = ki(x.v - y.v)
+proc minus*(x: Kint, y: Kint): Kobj = ki(x.v - y.v)
+proc minus*(x: Kfloat, y: Kfloat): Kobj = kf(x.v - y.v)
+
+proc minus*(x: Kchar, y: Kint): Kobj = ki(x.v - y.v)
+proc minus*(x: Kint, y: Kchar): Kobj = ki(x.v - y.v)
+
+proc minus*(x: Kchar, y: Kfloat): Kobj = kf(f(x.v) - y.v)
+proc minus*(x: Kfloat, y: Kchar): Kobj = kf(x.v - f(y.v))
+
+proc minus*(x: Kint, y: Kfloat): Kobj = kf(f(x.v) - y.v)
+proc minus*(x: Kfloat, y: Kint): Kobj = kf(x.v - f(y.v))
+
+fn_kchar_kchar["-"] = minus
+fn_kint_kint["-"] = minus
+fn_kfloat_kfloat["-"] = minus
+
+fn_kchar_kint["-"] = minus
+fn_kint_kchar["-"] = minus
+
+fn_kchar_kfloat["-"] = minus
+fn_kfloat_kchar["-"] = minus
+
+fn_kint_kfloat["-"] = minus
+fn_kfloat_kint["-"] = minus
+
+#### APLLY VERB FUNCTION ######
+proc applyverb*(verb: string, x: Kobj, y: Kobj): Kobj
+proc applyverb*(verb: string, x: Katom, y: Katom): Kobj = 
+    # echo x.at
+    case x.at
+    of kcharatom:
+        # echo y.at
+        case y.at
+        of kcharatom: return fn_kchar_kchar[verb](Kchar(x), Kchar(y))
+        of kintatom: return fn_kchar_kint[verb](Kchar(x), Kint(y))
+        of kfloatatom: return fn_kchar_kfloat[verb](Kchar(x), Kfloat(y))
+    of kintatom:
+        # echo y.at
+        case y.at
+        of kcharatom: return fn_kint_kchar[verb](Kint(x), Kchar(y))
+        of kintatom: return fn_kint_kint[verb](Kint(x), Kint(y))
+        of kfloatatom: return fn_kint_kfloat[verb](Kint(x), Kfloat(y))
+    of kfloatatom:
+        # echo y.at
+        case y.at
+        of kcharatom: return fn_kfloat_kchar[verb](Kfloat(x), Kchar(y))
+        of kintatom: return fn_kfloat_kint[verb](Kfloat(x), Kint(y))
+        of kfloatatom: return fn_kfloat_kfloat[verb](Kfloat(x), Kfloat(y))
+
+proc applyverb*(verb: string, x: Klist, y: Klist): Kobj = 
+        case x.klen == y.klen
+        of true: return kl(kzip(x.v, y.v).map(proc(xy: tuple[a: Kobj, b: Kobj]): KObj = applyverb(verb, xy.a, xy.b)))
+        of false: return kn("LENGTH ERROR.")
+
+proc applyverb*(verb: string, x: Kobj, y: Kobj): Kobj =
+    case x.t
+    of katom:
+        case y.t
+        of katom: return applyverb(verb, Katom(x), Katom(y))
+        of klist: return kl(Klist(y).v.map(proc(k: Kobj): Kobj = applyverb(verb, x, k)))
+        of knil: return x
+        else: return kn("DOMAIN ERROR.")
     of klist:
-      if klen(x) != klen(y):
-        return false
-      else:
-        return kzip(x.v3, y.v3).map(proc(xy: tuple[a: Katom, b: Katom]): bool = xy.a == xy.b).count(true) == klen(x).v0.toInt
-    of kdictionary: return false # TODO
+        case y.t
+        of katom: return kl(Klist(x).v.map(proc(k: Kobj): Kobj = applyverb(verb, k, y)))
+        of klist: return applyverb(verb, Klist(x), Klist(y))
+        of knil: return x
+        else: return kn("DOMAIN ERROR.")
+    of knil:
+        case y.t
+        of katom: return y
+        of klist: return y
+        of knil: return y
+        else: return kn("DOMAIN ERROR.")
+    else: return kn("DOMAIN ERROR.")
+
+proc eval*(ast: Kobj): Kobj =
+    case ast.t
     of kfunction: 
-      if x.op == x.op: 
-        return (x.left == y.left and x.right == y.right)
-      else: 
-        return false
-    of knil: return x.v11 == y.v11
-
-# check left and right nodes and return one state enum
-proc cs(left: Katom, right: Katom): Kstate =
-  if left.isNil and right.isNil:
-    return lrnil
-  elif left.isNil:
-    return lnil
-    # TODO
-  else:
-    return rnil
-
-proc cl(left: Katom, right: Katom): bool = klen(left) == klen(right)
-
-##################################
-##### K verbs ################
-##################################
-
-# plus verb with only right node
-proc vplusR(right: Katom): Katom =
-  return right
-
-# plus op with only right node
-proc vplusL(left: Katom): Katom =
-  return kfl(kplus, left)
-
-proc vplus*(left: Katom, right: Katom): Katom =
-  if left.isNil and right.isNil:
-    result = kn("domain error.") 
-  if left.isNil:
-    result = vplusR(right)
-  if right.isNil:
-    result = vplusL(left)
-  elif left.t == knumber and right.t == knumber:
-    result = kn(left.v0 + right.v0)
-  elif left.t == knumber and right.t == klist:
-    result = kl(map(right.v3, proc(x: Katom): Katom = vplus(left, x)))
-  elif left.t == klist and right.t == knumber:
-    result = kl(map(left.v3, proc(x: Katom): Katom = vplus(x, right)))
-  elif left.t == klist and right.t == klist:
-    if klen(left).v0 == klen(right).v0:
-      result = kl(zip(left.v3, right.v3).map(proc(xy: tuple[a: Katom, b: Katom]): Katom = vplus(xy.a, xy.b)))
-    else:
-      result = kn("length error.")
-  else:
-    result = kn("domain error.")
-  return result
-
-# proc vplus*(left: Katom, right: Katom): Katom =
-#   case cs(left, right)
-#   of lrnil: return kn("domain error.")
-#   of rnil: return vplusL(left)
-#   of lnil: return vplusR(right)
-#   of lnrn: return kn(left.v0 + right.v0)
-#   of lnrl: return kl(right.v3.map(proc(x: Katom): Katom = vplus(left, x)))
-#   of llrn: return kl(left.v3.map(proc(x: Katom): Katom = vplus(x, right)))
-#   of llrl:
-#     if cl(left, right):
-#       return kl(zip(left.v3, right.v3).map(proc(xy: tuple[a: Katom, b: Katom]): Katom = vplus(xy.a, xy.b)))
-#     else:
-#       return kn("length error.")
-#   else: return kn("domain error.")
-
-# method to apply functions to left, right nodes of ast
-proc applyfunction(f: Katom, left: Katom, right: Katom): Katom =
-  if f.op == kplus:
-    return vplus(left, right)
-  else:
-    return kn()
-
-# maineval method on top of ast
-proc eval*(node: Katom): Katom =
-  if node.t == kfunction:
-    if not node.left.isNil and not node.right.isNil:
-      return applyfunction(node, eval(node.left), eval(node.right))
-    elif node.left.isNil:
-      return node.right
-    else:
-      return node
-  return node
-
-
-# start the main module
-if isMainModule:
-  echo "K Language implementation in Nim [v0.0.1]"
+        var node = Kfunction(ast)
+        return applyverb(node.v, eval(node.left), eval(node.right))
+    else: return ast

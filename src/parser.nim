@@ -1,4 +1,4 @@
-import ./kin1, tables, strutils, sequtils, nre, strformat
+import ./kin, tables, strutils, sequtils, nre, strformat
 
 var NUMBER*  = re"^(-?0w|0N|-?\d+\.\d*|-?\d*\.?\d+)"
 var HEXLIT*  = re"(^0x[a-zA-Z\d]+)"

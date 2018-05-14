@@ -1,45 +1,34 @@
-import ./kin, unittest, macros, sequtils, strutils
+import./kin
 
-suite "Testing Equality within Katoms":
-    test "testing for knumber":
-        check kn(1) == kn(1)
-        check kn(1.0) == kn(1.0)
-        check kn(1) == kn(1.0)
-    
-    test "testing for kchar":
-        check kc('c') == kc('c')
+var
+    x = ki(5)
+    y = kf(5.6)
+    # s1 = Klist(v: @[Kchar(v: 45), Kchar(v: 56)])
+    l1 = kl(@[ki(1), ki(2)])
+    l2 = kl(@[ki(1), ki(2), kf(4.5)])
+    l3 = kl(@[kf(6.7), l1, l2])
 
-    test "testing for ksymbol":
-        check ks("name12") == ks("name12")
+echo x
+echo y
+echo kstr("hello world")
 
-    test "testing for klist":
-        check kl(@[kn(1.0), kn(2.0)]) == kl(@[kn(1.0), kn(2.0)])
-        check klc("hello world") == klc("hello world")
+echo applyverb("+", x, y)
+echo applyverb("+", x, l1)
+echo applyverb("+", l1, l1)
+echo applyverb("+", l1, l2)
 
+echo applyverb("-", x, y)
+echo applyverb("-", x, l1)
+echo applyverb("-", l1, l1)
+echo applyverb("-", l1, l2)
 
-suite "Testing dyadic plus":
-    test "knumber + knumber":
-        check vplus(kn(2), kn(3)) == kn(5)
-        check vplus(kn(4.5), kn(5)) == kn(9.5)
+echo applyverb("+", ki(1), l3)
 
-    test "knumber + klist[knumber]":
-        check vplus(kn(1.5), kln(@[1,2,3,4,5])) == kln(@[2.5, 3.5, 4.5, 5.5, 6.5])
+var
+    plusfn = kfn("+", x, y)
+    minusfn = kfn("-", x, y)
+    plusplusfn = kfn("+", kfn("+", x, y), kfn("+", x, y))
 
-    test "klist[knumber] + knumber":
-        check vplus(kln(@[1,2,3,4,5]), kn(1.5)) == kln(@[2.5, 3.5, 4.5, 5.5, 6.5])
-
-    test "klist[knumber] + klist[knumber]":
-        check vplus(kln(@[1,2,3,4,5]), kln(@[1,2,3,4,5])) == kln(@[2, 4, 6, 8, 10])
-
-suite "Testing eval function":
-    test "with vplus and left + right nodes":
-        var ast = kf(kplus, kn(5), kn(6))
-        check eval(ast) == kn(11)
-
-    test "with vplus right node only":
-        var ast = kfr(kplus, kl(@[kn(5), kn(6)]))
-        check eval(ast) == kl(@[kn(5), kn(6)])
-
-    test "with vplus left node only":
-        var ast = kfl(kplus, kl(@[kn(5), kn(6)]))
-        check eval(ast) == ast
+echo eval(plusfn)
+echo eval(minusfn)
+echo eval(plusplusfn)
