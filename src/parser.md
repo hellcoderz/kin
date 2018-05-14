@@ -1,6 +1,7 @@
 ## Tokenizer Grammar
 ```
 start -> atom verb atom | atom
+list -> atom atom | atom list
 atom -> string | bool | number
 
 verb -> ^[+\-*%!&|<>=~,^#_$?@.]
