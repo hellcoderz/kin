@@ -36,7 +36,7 @@ type Token = ref object of RootObj
     tok: string
     tokType: TokenType
 
-var state2regex = {
+var tokenType2regex = {
     r_number: NUMBER, r_hexlit: HEXLIT, r_bool: BOOL,
     r_name: NAME, r_symbol: SYMBOL, r_string: STRING, r_verb: VERB,
     r_assign: ASSIGN, r_ioverb: IOVERB, r_adverb: ADVERB, r_semi: SEMI,
@@ -45,7 +45,8 @@ var state2regex = {
     r_close_p: CLOSE_P, r_close_c: CLOSE_C, r_spaceornot: SPACEORNOT,
 }.toTable
 
-var stateTable = {
+# Tokenizer Grammar
+var grammar = {
     t_start: @[
                 @[r_string, r_verb, r_string],
                 @[r_string, r_verb, r_number], 
@@ -69,14 +70,14 @@ proc tokenize(s: TokenType, p: string, tokens: seq[Token]): seq[Token] =
         return ntokens
     
     block b1:
-        for and_states in stateTable[s]:
+        for and_states in grammar[s]:
             # echo "and_states: " & and_states.`$`
             block b2:
                 for and_state in and_states:
                     if np.len == 0:
                         return ntokens
-                    if and_state in state2regex:
-                        var match = np.find(state2regex[and_state])
+                    if and_state in tokenType2regex:
+                        var match = np.find(tokenType2regex[and_state])
                         if match.isSome():
                             var token = Token(tok: match.get().`$`, tokType: and_state)
                             # echo token
