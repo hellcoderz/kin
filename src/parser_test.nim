@@ -17,3 +17,16 @@ suite "Testing Regexes":
     test "BOOL":
         echo "010101b".find(BOOL)
         echo "001011B".find(BOOL)
+
+    test "NAME":
+        echo "mean1231".find(NAME)
+        echo "m23n23nMMMafsfs".find(NAME)
+    
+    test "SYMBOL":
+        echo "`".find(SYMBOL)
+        echo "`vavva3232".find(SYMBOL)
+
+    test "SPACEORNOT":
+        echo " ".find(SPACEORNOT)
+        echo "              ".find(SPACEORNOT)
+        echo "".find(SPACEORNOT)
