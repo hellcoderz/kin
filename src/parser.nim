@@ -36,6 +36,8 @@ type Token = ref object of RootObj
     tok: string
     tokType: TokenType
 
+type TokenTuple = tuple[tokens: seq[Token], left: string]
+
 var tokenType2regex = {
     r_number: NUMBER, r_hexlit: HEXLIT, r_bool: BOOL,
     r_name: NAME, r_symbol: SYMBOL, r_string: STRING, r_verb: VERB,
@@ -48,26 +50,30 @@ var tokenType2regex = {
 # Tokenizer Grammar for producing correct tokens
 var grammar = {
     t_start: @[
-                @[r_string, r_verb, r_string],
-                @[r_string, r_verb, r_number], 
-                @[r_number, r_verb, r_string], 
-                @[r_number, r_verb, r_number], 
-                @[r_number], 
-                @[r_string]
+                @[t_atom, r_verb, t_atom],
+                @[t_atom]
             ],
-    t_atom: @[@[r_string, r_bool, r_number]]
+    t_atom: @[@[r_string], @[r_bool], @[r_number]]
 }.toTable
 
-proc getTokenStates(tokens: seq[Token]): seq[TokenType] = tokens.map(proc(token: Token): TokenType = token.tokType)
+proc getTokenStates(tokens: seq[Token]): seq[TokenType] = 
+    if tokens.len > 0:
+        return tokens.map(proc(token: Token): TokenType = token.tokType)
+    else:
+        return @[]
 
 proc `$`(token: Token): string = fmt"token: {token.tok}   tokenType: {token.tokType}"
-proc `$`(tokenTypes: seq[TokenType]): string = tokenTypes.map(proc(tokenType: TokenType): string = tokenType.`$`).foldl(a & "|" & b)
+proc `$`(tokenTypes: seq[TokenType]): string = 
+    if tokenTypes.len > 0:
+        return tokenTypes.map(proc(tokenType: TokenType): string = tokenType.`$`).foldl(a & "|" & b)
+    else:
+        return ""
 
-proc tokenize(s: TokenType, p: string, tokens: seq[Token]): seq[Token] =
+proc tokenize(s: TokenType, p: string, tokens: seq[Token]): TokenTuple =
     var np = p
     var ntokens = tokens
     if np.len == 0:
-        return ntokens
+        return (tokens: ntokens, left: np)
     
     block b1:
         for and_states in grammar[s]:
@@ -75,7 +81,7 @@ proc tokenize(s: TokenType, p: string, tokens: seq[Token]): seq[Token] =
             block b2:
                 for and_state in and_states:
                     if np.len == 0:
-                        return ntokens
+                        return (tokens: ntokens, left: np)
                     if and_state in tokenType2regex:
                         var match = np.find(tokenType2regex[and_state])
                         if match.isSome():
@@ -86,11 +92,14 @@ proc tokenize(s: TokenType, p: string, tokens: seq[Token]): seq[Token] =
                         else:
                             break b2
                     else:
-                        ntokens = tokenize(and_state, np, ntokens)
-    return ntokens
+                        var res = tokenize(and_state, np, ntokens)
+                        ntokens = res.tokens
+                        np = res.left
+    return (tokens: ntokens, left: np)
 
 proc tokenize(p: string): seq[Token] =
-    return tokenize(t_start, p.strip, @[])
+    var tokensTuple = tokenize(t_start, p.strip, @[])
+    return tokensTuple.tokens
 
 
 if isMainModule:
