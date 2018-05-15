@@ -1,7 +1,10 @@
 ## Tokenizer Grammar
 ```
-start -> atom verb atom | atom
-list -> atom atom | atom list
+start -> list | atom verb atom | atom
+list -> slist | blist | nlist
+slist -> string list | string 
+blist -> bool blist | bool
+nlist -> number nlist | number
 atom -> string | bool | number
 
 verb -> ^[+\-*%!&|<>=~,^#_$?@.]

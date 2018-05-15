@@ -30,7 +30,8 @@ type TokenType = enum
     r_colon, r_view, r_cond, r_dict,
     r_open_b, r_open_p, r_open_c, r_close_b,
     r_close_p, r_close_c, r_spaceornot,
-    t_start, t_atom, t_list
+    t_start, t_atom, t_list, tnlist, t_slist,
+    t_blist
 
 type Token = ref object of RootObj
     tok: string
@@ -50,10 +51,12 @@ var tokenType2regex = {
 # Tokenizer Grammar for producing correct tokens
 var grammar = {
     t_start: @[
+                @[t_nlist],
                 @[t_atom, r_verb, t_atom],
                 @[t_atom]
             ],
-    t_atom: @[@[r_string], @[r_bool], @[r_number]]
+    t_atom: @[@[r_string], @[r_bool], @[r_number]],
+    t_nlist: @[@[r_number, t_nlist], @[r_number]],
 }.toTable
 
 proc getTokenStates*(tokens: seq[Token]): seq[TokenType] = 
@@ -69,7 +72,7 @@ proc `$`*(tokenTypes: seq[TokenType]): string =
     else:
         return ""
 
-proc tokenize(s: TokenType, p: string, tokens: seq[Token]): TokenTuple =
+proc tokenize(s: TokenType, p: string, tokens: seq[Token], path: seq[TokenType]): TokenTuple =
     var np = p
     var ntokens = tokens
     if np.len == 0:
@@ -92,13 +95,13 @@ proc tokenize(s: TokenType, p: string, tokens: seq[Token]): TokenTuple =
                         else:
                             break b2
                     else:
-                        var res = tokenize(and_state, np, ntokens)
+                        var res = tokenize(and_state, np, ntokens, path.concat(@[and_state]))
                         ntokens = res.tokens
                         np = res.left
     return (tokens: ntokens, left: np)
 
 proc tokenize*(p: string): seq[Token] =
-    var tokensTuple = tokenize(t_start, p.strip, @[])
+    var tokensTuple = tokenize(t_start, p.strip, @[], @[t_start])
     return tokensTuple.tokens
 
 
@@ -109,7 +112,8 @@ if isMainModule:
         "36.78   +   467.89",
         "45.67",
         "\"hello world\"",
-        "1+\"hello\""
+        "1+\"hello\"",
+        "1 2 3 4 5"
     ]
 
     for program in programs:
