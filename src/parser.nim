@@ -52,12 +52,9 @@ var tokenType2regex = {
 var grammar = {
     t_start: @[
                 @[t_nlist, r_verb, t_nlist],
-                @[t_nlist, r_verb, t_atom],
-                @[t_atom, r_verb, t_nlist],
-                @[t_atom, r_verb, t_atom],
-                @[t_nlist],
-                @[t_atom]
+                @[t_list]
             ],
+    t_list: @[@[t_nlist], @[t_atom]],
     t_atom: @[@[r_string], @[r_bool], @[r_number]],
     t_nlist: @[@[r_number, t_nlist], @[r_number]],
 }.toTable
