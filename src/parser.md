@@ -1,8 +1,8 @@
 ## Tokenizer Grammar
 ```
-start -> list | atom verb atom | atom
+start -> list verb list | list verb atom | atom verb list | atom verb atom | list | atom
 list -> slist | blist | nlist
-slist -> string list | string 
+slist -> string list | string
 blist -> bool blist | bool
 nlist -> number nlist | number
 atom -> string | bool | number
