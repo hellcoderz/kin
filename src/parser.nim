@@ -51,7 +51,7 @@ var tokenType2regex = {
 # Tokenizer Grammar for producing correct tokens
 var grammar = {
     t_start: @[
-                @[t_nlist, r_verb, t_nlist],
+                @[t_list, r_verb, t_start],
                 @[t_list]
             ],
     t_list: @[@[t_nlist], @[t_atom]],
@@ -117,6 +117,8 @@ if isMainModule:
         "1 2 3 4 + 1",
         "1+ 232.54 1 2 3 4",
         "1 2 3 4 + 1 45.6 -67.7",
+        "1+2+3",
+        "1 2 3 45.5 + 5 6 7 4 + 4 5 6 23.45"
     ]
 
     for program in programs:

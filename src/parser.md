@@ -1,7 +1,7 @@
 ## Tokenizer Grammar
 ```
-start -> list1 verb list1 | list
-list1 -> nlist | atom
+start -> list verb start | list
+list -> nlist | atom
 nlist -> number nlist | number
 atom -> string | bool | number
 
