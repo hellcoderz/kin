@@ -54,8 +54,8 @@ var grammar = {
         @[t_list, r_verb, t_start],
         @[t_list]],
     t_list: @[
+        @[r_open_p, r_close_p], # emply list rule
         @[r_open_p, t_blist, r_close_p],
-        # @[r_open_p, r_close_p], # emply list rule
         @[t_nlist],
         @[t_atom]],
     t_blist: @[@[t_list, r_semi, t_blist], @[t_list]],
@@ -150,7 +150,8 @@ if isMainModule:
         "(1 2 3  ; 34 5  6 66 6)",
         "(1 2 3  ; 34 5  6 66 6; 23 -45.565)",
         "(1 2 3  ; 34 5  6 66 6; 23 -45.565; (1 2 3;3 4; \"stringfsfsfsf\") ; 3 4 5 6)",
-        "(\"dadadd\" ; \"adadadadadad\")"
+        "(\"dadadd\" ; \"adadadadadad\")",
+        "(   )"
     ]
 
     for program in programs:

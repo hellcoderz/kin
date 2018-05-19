@@ -1,7 +1,7 @@
 ## Tokenizer Grammar
 ```
 start -> list verb start | list
-list -> "(" blist ")" | nlist | atom
+list -> "(" ")" | "(" blist ")" | nlist | atom
 blist -> list semi blist | list
 nlist -> number nlist | number
 atom -> string | bool | number
