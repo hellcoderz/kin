@@ -31,7 +31,7 @@ type TokenType = enum
     r_open_b, r_open_p, r_open_c, r_close_b,
     r_close_p, r_close_c, r_spaceornot,
     t_start, t_atom, t_list, tnlist, t_slist,
-    t_blist, t_elist
+    t_blist
 
 type Token = ref object of RootObj
     tok: string
@@ -54,10 +54,10 @@ var grammar = {
         @[t_list, r_verb, t_start],
         @[t_list]],
     t_list: @[
-        @[r_open_p, t_list, r_close_p],
-        @[r_open_p, t_list, r_semi, t_list, r_close_p],
+        @[r_open_p, t_blist, r_close_p],
         @[t_nlist],
         @[t_atom]],
+    t_blist: @[@[t_list, r_semi, t_blist], @[t_list, r_semi], @[t_list]],
     t_atom: @[@[r_string], @[r_bool], @[r_number]],
     t_nlist: @[@[r_number, t_nlist], @[r_number]],
 }.toTable
@@ -145,7 +145,11 @@ if isMainModule:
         "1+2+3",
         "1 2 3 45.5 + 5 6 7 4 + 4 5 6 23.45",
         "(1 2 3 4)",
-        "(1 ; 3)"
+        "(1 ; 3)",
+        "(1 2 3  ; 34 5  6 66 6)",
+        "(1 2 3  ; 34 5  6 66 6; 23 -45.565)",
+        "(1 2 3  ; 34 5  6 66 6; 23 -45.565; (1 2 3;3 4; \"stringfsfsfsf\") ; 3 4 5 6)",
+        "(\"dadadd\" ; \"adadadadadad\")"
     ]
 
     for program in programs:
