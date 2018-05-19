@@ -55,9 +55,10 @@ var grammar = {
         @[t_list]],
     t_list: @[
         @[r_open_p, t_blist, r_close_p],
+        # @[r_open_p, r_close_p], # emply list rule
         @[t_nlist],
         @[t_atom]],
-    t_blist: @[@[t_list, r_semi, t_blist], @[t_list, r_semi], @[t_list]],
+    t_blist: @[@[t_list, r_semi, t_blist], @[t_list]],
     t_atom: @[@[r_string], @[r_bool], @[r_number]],
     t_nlist: @[@[r_number, t_nlist], @[r_number]],
 }.toTable
