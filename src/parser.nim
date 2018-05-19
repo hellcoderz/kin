@@ -1,4 +1,4 @@
-import ./kin, tables, strutils, sequtils, nre, strformat
+import ./kin, tables, strutils, sequtils, nre, strformat, rdstdin
 
 var NUMBER*  = re"^(-?0w|0N|-?\d+\.\d*|-?\d*\.?\d+)"
 var HEXLIT*  = re"(^0x[a-zA-Z\d]+)"
@@ -31,13 +31,13 @@ type TokenType = enum
     r_open_b, r_open_p, r_open_c, r_close_b,
     r_close_p, r_close_c, r_spaceornot,
     t_start, t_atom, t_list, tnlist, t_slist,
-    t_blist
+    t_blist, t_elist
 
 type Token = ref object of RootObj
     tok: string
     tokType: TokenType
 
-type TokenTuple = tuple[tokens: seq[Token], left: string]
+type TokenTuple = tuple[tokens: seq[Token], left: string, found: bool]
 
 var tokenType2regex = {
     r_number: NUMBER, r_hexlit: HEXLIT, r_bool: BOOL,
@@ -51,10 +51,13 @@ var tokenType2regex = {
 # Tokenizer Grammar for producing correct tokens
 var grammar = {
     t_start: @[
-                @[t_list, r_verb, t_start],
-                @[t_list]
-            ],
-    t_list: @[@[t_nlist], @[t_atom]],
+        @[t_list, r_verb, t_start],
+        @[t_list]],
+    t_list: @[
+        @[r_open_p, t_list, r_close_p],
+        @[r_open_p, t_list, r_semi, t_list, r_close_p],
+        @[t_nlist],
+        @[t_atom]],
     t_atom: @[@[r_string], @[r_bool], @[r_number]],
     t_nlist: @[@[r_number, t_nlist], @[r_number]],
 }.toTable
@@ -73,18 +76,27 @@ proc `$`*(tokenTypes: seq[TokenType]): string =
         return ""
 
 proc tokenize(s: TokenType, p: string, tokens: seq[Token], path: seq[TokenType]): TokenTuple =
-    var np = p
+    # echo fmt"s={s} p={p}"
+    var np = p.strip
     var ntokens = tokens
+    var found = false
     if np.len == 0:
-        return (tokens: ntokens, left: np)
+        return (tokens: ntokens, left: np, found: true)
     
     block b1:
+        var i = -1
         for and_states in grammar[s]:
-            # echo "and_states: " & and_states.`$`
+            i = i + 1
+            # echo fmt"   {np}   {and_states}"
             block b2:
+                var j = -1
+                found = true
                 for and_state in and_states:
+                    j = j + 1
+                    # echo fmt"       {np}   {and_state}"
+                    # echo fmt"s={s} np={np} ass={and_states} as={and_state}"
                     if np.len == 0:
-                        return (tokens: ntokens, left: np)
+                        return (tokens: ntokens, left: np, found: true)
                     if and_state in tokenType2regex:
                         var match = np.find(tokenType2regex[and_state])
                         if match.isSome():
@@ -93,12 +105,25 @@ proc tokenize(s: TokenType, p: string, tokens: seq[Token], path: seq[TokenType])
                             ntokens = ntokens.concat(@[token])
                             np = np[match.get().captureBounds[-1].get().b+1..<np.len].strip
                         else:
+                            np = p
+                            ntokens = tokens
+                            found = false
                             break b2
                     else:
                         var res = tokenize(and_state, np, ntokens, path.concat(@[and_state]))
+                        if res.found == false:
+                            np = p
+                            ntokens = tokens
+                            found = false
+                            break b2
                         ntokens = res.tokens
                         np = res.left
-    return (tokens: ntokens, left: np)
+            if found:
+                break b1
+    if np.len < p.len:
+        return (tokens: ntokens, left: np, found: found)
+    else:
+        return (tokens: ntokens, left: np, found: found)
 
 proc tokenize*(p: string): seq[Token] =
     var tokensTuple = tokenize(t_start, p.strip, @[], @[t_start])
@@ -118,8 +143,19 @@ if isMainModule:
         "1+ 232.54 1 2 3 4",
         "1 2 3 4 + 1 45.6 -67.7",
         "1+2+3",
-        "1 2 3 45.5 + 5 6 7 4 + 4 5 6 23.45"
+        "1 2 3 45.5 + 5 6 7 4 + 4 5 6 23.45",
+        "(1 2 3 4)",
+        "(1 ; 3)"
     ]
 
     for program in programs:
         echo program & " => " & tokenize(program).getTokenStates().`$`
+
+    # echo "======================================================"
+    # while true:
+    #     var program = readLineFromStdin("> ")
+    #     if program.strip != "quit":
+    #         echo tokenize(program).getTokenStates().`$`
+    #     else:
+    #         echo "BYE."
+    #         break
