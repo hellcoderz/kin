@@ -35,6 +35,7 @@ type TokenType = enum
     t_start, t_atom, t_list, tnlist, t_slist,
     t_blist
 
+# TODO: add `start` and `end` index of the token
 type Token = ref object of RootObj
     tok: string
     tokType: TokenType
