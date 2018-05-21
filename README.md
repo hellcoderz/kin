@@ -1,4 +1,4 @@
-# kin (K in Nim)
+# kin (K in Nim) - Not usable yet
 K language implementation in Nim. Inspired by John Earnest [Ok](https://github.com/JohnEarnest/ok)
 
 ## About K
