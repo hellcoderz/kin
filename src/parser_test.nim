@@ -45,3 +45,26 @@ suite "Tokenizer Test":
 
     test "testin r_atom r_verb r_atom":
         check tokenize("45.56+43.56").getTokenStates().`$` == "r_number|r_verb|r_number"
+
+suite "Tokenizer examples test":
+    test "Samples":
+        check tokenize("36.78   +   467.89").getTokenStates().`$` == "r_number|r_verb|r_number"
+        check tokenize("45.67").getTokenStates().`$` == "r_number"
+        check tokenize("\"hello world\"").getTokenStates().`$` == "r_string"
+        check tokenize("1+\"hello\"").getTokenStates().`$` == "r_number|r_verb|r_string"
+        check tokenize("1 2 3 4 5").getTokenStates().`$` == "r_number|r_number|r_number|r_number|r_number"
+        check tokenize("1 2 3 4 + 1").getTokenStates().`$` == "r_number|r_number|r_number|r_number|r_verb|r_number"
+        check tokenize("1+ 232.54 1 2 3 4").getTokenStates().`$` == "r_number|r_verb|r_number|r_number|r_number|r_number|r_number"
+        check tokenize("1 2 3 4 + 1 45.6 -67.7").getTokenStates().`$` == "r_number|r_number|r_number|r_number|r_verb|r_number|r_number|r_number"
+        check tokenize("1+2+3").getTokenStates().`$` == "r_number|r_verb|r_number|r_verb|r_number"
+        check tokenize("1 2 3 45.5 + 5 6 7 4 + 4 5 6 23.45").getTokenStates().`$` == "r_number|r_number|r_number|r_number|r_verb|r_number|r_number|r_number|r_number|r_verb|r_number|r_number|r_number|r_number"
+        check tokenize("(1 2 3 4)").getTokenStates().`$` == "r_open_p|r_number|r_number|r_number|r_number|r_close_p"
+        check tokenize("(1 ; 3)").getTokenStates().`$` == "r_open_p|r_number|r_semi|r_number|r_close_p"
+        check tokenize("(1 2 3  ; 34 5  6 66 6)").getTokenStates().`$` == "r_open_p|r_number|r_number|r_number|r_semi|r_number|r_number|r_number|r_number|r_number|r_close_p"
+        check tokenize("(1 2 3  ; 34 5  6 66 6; 23 -45.565)").getTokenStates().`$` == "r_open_p|r_number|r_number|r_number|r_semi|r_number|r_number|r_number|r_number|r_number|r_semi|r_number|r_number|r_close_p"
+        check tokenize("(1 2 3  ; 34 5  6 66 6; 23 -45.565; (1 2 3;3 4; \"stringfsfsfsf\") ; 3 4 5 6)").getTokenStates().`$` == "r_open_p|r_number|r_number|r_number|r_semi|r_number|r_number|r_number|r_number|r_number|r_semi|r_number|r_number|r_semi|r_open_p|r_number|r_number|r_number|r_semi|r_number|r_number|r_semi|r_string|r_close_p|r_semi|r_number|r_number|r_number|r_number|r_close_p"
+        check tokenize("(\"dadadd\" ; \"adadadadadad\")").getTokenStates().`$` == "r_open_p|r_string|r_semi|r_string|r_close_p"
+        check tokenize("(   )").getTokenStates().`$` == "r_open_p|r_close_p"
+        check tokenize("1     +     /    1 2 3 4").getTokenStates().`$` == "r_number|r_verb|r_adverb|r_number|r_number|r_number|r_number"
+        check tokenize("0101010b + 1 2 3 4 5 - 10101010b").getTokenStates().`$` == "r_bool|r_verb|r_number|r_number|r_number|r_number|r_number|r_verb|r_bool"
+        

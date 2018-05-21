@@ -23,6 +23,8 @@ var CLOSE_P* = re"^\)"
 var CLOSE_C* = re"^}"
 var SPACEORNOT* = re"^\s*"
 
+# r_ => regex based TokenType
+# t_ => is a grammar rule and `grammar` dict key
 type TokenType = enum
     r_number, r_hexlit, r_bool,
     r_name, r_symbol, r_string, r_verb,
@@ -61,7 +63,7 @@ var grammar = {
         @[t_atom]],
     t_blist: @[@[t_list, r_semi, t_blist], @[t_list]],
     t_atom: @[@[r_string], @[r_bool], @[r_number]],
-    t_nlist: @[@[r_number, t_nlist], @[r_number]],
+    t_nlist: @[@[r_number, t_nlist], @[r_bool], @[r_number]],
 }.toTable
 
 proc getTokenStates*(tokens: seq[Token]): seq[TokenType] = 
@@ -129,6 +131,8 @@ proc tokenize(s: TokenType, p: string, tokens: seq[Token], path: seq[TokenType])
 
 proc tokenize*(p: string): seq[Token] =
     var tokensTuple = tokenize(t_start, p.strip, @[], @[t_start])
+    if not tokensTuple.found:
+        echo "PARSE ERROR."
     return tokensTuple.tokens
 
 
@@ -153,7 +157,8 @@ if isMainModule:
         "(1 2 3  ; 34 5  6 66 6; 23 -45.565; (1 2 3;3 4; \"stringfsfsfsf\") ; 3 4 5 6)",
         "(\"dadadd\" ; \"adadadadadad\")",
         "(   )",
-        "1     +     /    1 2 3 4"
+        "1     +     /    1 2 3 4",
+        "0101010b + 1 2 3 4 5 - 10101010b"
     ]
 
     for program in programs:
