@@ -1,4 +1,4 @@
-import ./kin, tables, strutils, sequtils, nre, strformat, rdstdin
+import ./kin, tables, strutils, sequtils, nre, strformat, rdstdin, os
 
 var NUMBER*  = re"^(-?0w|0N|-?\d+\.\d*|-?\d*\.?\d+)"
 var HEXLIT*  = re"(^0x[a-zA-Z\d]+)"
@@ -79,6 +79,8 @@ proc `$`*(tokenTypes: seq[TokenType]): string =
     else:
         return ""
 
+# Tokeninze the string with correct tokens
+# TODO: figure out to create a parse tree alongside
 proc tokenize(s: TokenType, p: string, tokens: seq[Token], path: seq[TokenType]): TokenTuple =
     # echo fmt"s={s} p={p}"
     var np = p.strip
@@ -130,6 +132,7 @@ proc tokenize(s: TokenType, p: string, tokens: seq[Token], path: seq[TokenType])
         return (tokens: ntokens, left: np, found: found)
 
 proc tokenize*(p: string): seq[Token] =
+    # TODO: create a parse tree after tokenization
     var tokensTuple = tokenize(t_start, p.strip, @[], @[t_start])
     if not tokensTuple.found:
         echo "PARSE ERROR."
@@ -137,8 +140,6 @@ proc tokenize*(p: string): seq[Token] =
 
 
 if isMainModule:
-    echo "Parsing Module for K Language implementation in Nim [v0.0.1]"
-
     var programs = @[
         "36.78   +   467.89",
         "45.67",
@@ -164,11 +165,16 @@ if isMainModule:
     for program in programs:
         echo program & " => " & tokenize(program).getTokenStates().`$`
 
-    # echo "======================================================"
-    # while true:
-    #     var program = readLineFromStdin("> ")
-    #     if program.strip != "quit":
-    #         echo tokenize(program).getTokenStates().`$`
-    #     else:
-    #         echo "BYE."
-    #         break
+    if paramCount() > 0:
+        if paramStr(1) == "-i":
+            echo ""
+            echo "================================================================"
+            echo "| Parsing Module for K Language implementation in Nim [v0.0.1] |"
+            echo "================================================================"
+            while true:
+                var program = readLineFromStdin("> ")
+                if program.strip != "quit":
+                    echo tokenize(program).getTokenStates().`$`
+                else:
+                    echo "BYE."
+                    break
