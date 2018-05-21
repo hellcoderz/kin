@@ -62,7 +62,7 @@ var grammar = {
         @[t_nlist],
         @[t_atom]],
     t_blist: @[@[t_list, r_semi, t_blist], @[t_list]],
-    t_atom: @[@[r_string], @[r_bool], @[r_number]],
+    t_atom: @[@[r_string], @[r_bool], @[r_number]], # bool should be recognized before number since they have same prefix
     t_nlist: @[@[r_number, t_nlist], @[r_bool], @[r_number]],
 }.toTable
 
