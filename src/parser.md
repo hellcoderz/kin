@@ -1,6 +1,6 @@
 ## Tokenizer Grammar
 ```
-start -> list verb start | list
+start -> list verb start | list verb adverb start | list
 list -> "(" ")" | "(" blist ")" | nlist | atom
 blist -> list semi blist | list
 nlist -> number nlist | number

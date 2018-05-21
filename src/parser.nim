@@ -51,6 +51,7 @@ var tokenType2regex = {
 # Tokenizer Grammar for producing correct tokens
 var grammar = {
     t_start: @[
+        @[t_list, r_verb, r_adverb, t_start],
         @[t_list, r_verb, t_start],
         @[t_list]],
     t_list: @[
@@ -151,7 +152,8 @@ if isMainModule:
         "(1 2 3  ; 34 5  6 66 6; 23 -45.565)",
         "(1 2 3  ; 34 5  6 66 6; 23 -45.565; (1 2 3;3 4; \"stringfsfsfsf\") ; 3 4 5 6)",
         "(\"dadadd\" ; \"adadadadadad\")",
-        "(   )"
+        "(   )",
+        "1     +     /    1 2 3 4"
     ]
 
     for program in programs:
