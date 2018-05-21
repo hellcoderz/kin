@@ -67,4 +67,4 @@ suite "Tokenizer Samples tests":
         check tokenize("(   )").getTokenStates().`$` == "r_open_p|r_close_p"
         check tokenize("1     +     /    1 2 3 4").getTokenStates().`$` == "r_number|r_verb|r_adverb|r_number|r_number|r_number|r_number"
         check tokenize("0101010b + 1 2 3 4 5 - 10101010b").getTokenStates().`$` == "r_bool|r_verb|r_number|r_number|r_number|r_number|r_number|r_verb|r_bool"
-        
+        check tokenize("(1+2)+3").getTokenStates().`$` == "r_open_p|r_number|r_verb|r_number|r_close_p|r_verb|r_number"

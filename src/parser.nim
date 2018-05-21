@@ -56,7 +56,10 @@ var grammar = {
     t_start: @[
         @[t_list, r_verb, r_adverb, t_start],
         @[t_list, r_verb, t_start],
-        @[t_list]],
+        @[t_list],
+        @[r_adverb, t_start],
+        @[r_verb, t_start],
+        @[r_open_p, t_start, r_close_p, t_start]],
     t_list: @[
         @[r_open_p, r_close_p], # emply list rule
         @[r_open_p, t_blist, r_close_p],
@@ -160,7 +163,9 @@ if isMainModule:
         "(\"dadadd\" ; \"adadadadadad\")",
         "(   )",
         "1     +     /    1 2 3 4",
-        "0101010b + 1 2 3 4 5 - 10101010b"
+        "0101010b + 1 2 3 4 5 - 10101010b",
+        "(1+2)+3",
+        "(1+/:2)+3"
     ]
 
     for program in programs:
