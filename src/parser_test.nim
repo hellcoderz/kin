@@ -46,8 +46,8 @@ suite "Tokenizer Test":
     test "testin r_atom r_verb r_atom":
         check tokenize("45.56+43.56").getTokenStates().`$` == "r_number|r_verb|r_number"
 
-suite "Tokenizer examples test":
-    test "Samples":
+suite "Tokenizer Samples tests":
+    test "Samples Set 1":
         check tokenize("36.78   +   467.89").getTokenStates().`$` == "r_number|r_verb|r_number"
         check tokenize("45.67").getTokenStates().`$` == "r_number"
         check tokenize("\"hello world\"").getTokenStates().`$` == "r_string"
