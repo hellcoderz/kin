@@ -142,6 +142,15 @@ proc tokenize*(p: string): seq[Token] =
         echo "PARSE ERROR."
     return tokensTuple.tokens
 
+# parse the tokens into AST of Kobj
+# use stack and buffer to do shift-reduce kind of parsing
+proc parse*(tokens: seq[Token]): Kobj =
+    var i = tokens.len - 1
+
+    while i > -1:
+        discard
+    return kn()
+
 
 if isMainModule:
     var programs = @[
